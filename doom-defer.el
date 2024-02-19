@@ -1,5 +1,7 @@
 ;; This originates from doom emacs, but I found it in Noctuid's config.
 ;; https://github.com/hlissner/doom-emacs/blob/42a21dffddeee57d84e82a9f0b65d1b0cba2b2af/core/core.el#L353
+(require 'use-package)
+
 (defvar doom-incremental-packages '(t)
   "A list of packages to load incrementally after startup. Any large packages
 here may cause noticeable pauses, so it's recommended you break them up into
