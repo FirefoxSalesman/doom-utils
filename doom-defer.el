@@ -1,6 +1,5 @@
 ;; This originates from doom emacs, but I found it in Noctuid's config.
 ;; https://github.com/hlissner/doom-emacs/blob/42a21dffddeee57d84e82a9f0b65d1b0cba2b2af/core/core.el#L353
-(require 'use-package)
 
 (defvar doom-incremental-packages '(t)
   "A list of packages to load incrementally after startup. Any large packages
@@ -140,56 +139,55 @@ debug mode is off. Return non-nil."
 ;;   :defer-incrementally SYMBOL|LIST|t
 ;;
 ;; Check out `use-package!'s documentation for more about these two.
-(with-eval-after-load 'use-package
-  (eval-when-compile
-    (dolist (keyword '(:defer-incrementally :after-call))
-      (push keyword use-package-deferring-keywords)
-      (setq use-package-keywords
-            (use-package-list-insert keyword use-package-keywords :after)))
+(with-eval-after-load 'use-package-core
+  (dolist (keyword '(:defer-incrementally :after-call))
+    (push keyword use-package-deferring-keywords)
+    (setq use-package-keywords
+          (use-package-list-insert keyword use-package-keywords :after)))
 
-    (defalias 'use-package-normalize/:defer-incrementally #'use-package-normalize-symlist)
-    (defun use-package-handler/:defer-incrementally (name _keyword targets rest state)
-      (use-package-concat
-       `((doom-load-packages-incrementally
-          ',(if (equal targets '(t))
-		(list name)
-              (append targets (list name)))))
-       (use-package-process-keywords name rest state)))
-    
-    (defalias 'use-package-normalize/:after-call #'use-package-normalize-symlist)
-    (defun use-package-handler/:after-call (name _keyword hooks rest state)
-      (if (plist-get state :demand)
-          (use-package-process-keywords name rest state)
-	(let ((fn (make-symbol (format "doom--after-call-%s-h" name))))
-          (use-package-concat
-           `((fset ',fn
-                   (lambda (&rest _)
-                     (doom-log "use-package: lazy loading %s from %s" ',name ',fn)
-                     (condition-case e
-			 ;; If `default-directory' is a directory that doesn't
-			 ;; exist or is unreadable, Emacs throws up file-missing
-			 ;; errors, so we set it to a directory we know exists and
-			 ;; is readable.
-			 (let ((default-directory user-emacs-directory))
-                           (require ',name))
-                       ((debug error)
-			(message "Failed to load deferred package %s: %s" ',name e)))
-                     (when-let (deferral-list (assq ',name doom--deferred-packages-alist))
-                       (dolist (hook (cdr deferral-list))
-			 (advice-remove hook #',fn)
-			 (remove-hook hook #',fn))
-                       (delq! deferral-list doom--deferred-packages-alist)
-                       (unintern ',fn nil)))))
-           (let (forms)
-             (dolist (hook hooks forms)
-               (push (if (string-match-p "-\\(?:functions\\|hook\\)$" (symbol-name hook))
-			 `(add-hook ',hook #',fn)
-                       `(advice-add #',hook :before #',fn))
-                     forms)))
-           `((unless (assq ',name doom--deferred-packages-alist)
-               (push '(,name) doom--deferred-packages-alist))
-             (nconc (assq ',name doom--deferred-packages-alist)
-                    '(,@hooks)))
-           (use-package-process-keywords name rest state)))))))
+  (defalias 'use-package-normalize/:defer-incrementally #'use-package-normalize-symlist)
+  (defun use-package-handler/:defer-incrementally (name _keyword targets rest state)
+    (use-package-concat
+     `((doom-load-packages-incrementally
+        ',(if (equal targets '(t))
+	      (list name)
+            (append targets (list name)))))
+     (use-package-process-keywords name rest state)))
+  
+  (defalias 'use-package-normalize/:after-call #'use-package-normalize-symlist)
+  (defun use-package-handler/:after-call (name _keyword hooks rest state)
+    (if (plist-get state :demand)
+        (use-package-process-keywords name rest state)
+      (let ((fn (make-symbol (format "doom--after-call-%s-h" name))))
+        (use-package-concat
+         `((fset ',fn
+                 (lambda (&rest _)
+                   (doom-log "use-package: lazy loading %s from %s" ',name ',fn)
+                   (condition-case e
+		       ;; If `default-directory' is a directory that doesn't
+		       ;; exist or is unreadable, Emacs throws up file-missing
+		       ;; errors, so we set it to a directory we know exists and
+		       ;; is readable.
+		       (let ((default-directory user-emacs-directory))
+                         (require ',name))
+                     ((debug error)
+		      (message "Failed to load deferred package %s: %s" ',name e)))
+                   (when-let (deferral-list (assq ',name doom--deferred-packages-alist))
+                     (dolist (hook (cdr deferral-list))
+		       (advice-remove hook #',fn)
+		       (remove-hook hook #',fn))
+                     (delq! deferral-list doom--deferred-packages-alist)
+                     (unintern ',fn nil)))))
+         (let (forms)
+           (dolist (hook hooks forms)
+             (push (if (string-match-p "-\\(?:functions\\|hook\\)$" (symbol-name hook))
+		       `(add-hook ',hook #',fn)
+                     `(advice-add #',hook :before #',fn))
+                   forms)))
+         `((unless (assq ',name doom--deferred-packages-alist)
+             (push '(,name) doom--deferred-packages-alist))
+           (nconc (assq ',name doom--deferred-packages-alist)
+                  '(,@hooks)))
+         (use-package-process-keywords name rest state))))))
 
 (provide 'doom-defer)

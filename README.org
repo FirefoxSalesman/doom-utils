@@ -30,8 +30,6 @@ Allows the user to incrementally load packages using 2 new use-package keywords
 + =defer-incrementally=- Loads the package whenever emacs is idle.
 + =after-call=- Loads the package after a hook is called. Pairs very nicely with the hooks from [[https://github.com/ajgrf/on.el][on.el]]
 
-Loading this module will also load use-package
-
 Example of =defer-incrementally= being used on a whole package:
 #+begin_src emacs-lisp
   (use-package evil-surround
