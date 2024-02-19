@@ -1,0 +1,56 @@
+#+title: Doom Utils- Various Utilities from Doom Emacs
+Everything in this repo is taken directly from [[https://github.com/doomemacs/doomemacs][doom-emacs]]. I did not make anything here.
+
+* Doom Escape
+A more advanced verision of keyboard-quit. It runs =doom-escape-hook=, meaning you can customize it to quit anything.
+
+Example config:
+#+begin_src emacs-lisp
+  (use-package doom-escape
+    :config
+    (global-set-key [remap keyboard-quit] #'doom/escape)
+
+    (with-eval-after-load 'eldoc
+      (eldoc-add-command 'doom/escape))
+
+    (add-hook 'doom-escape-hook 'transient-quit-one)
+    :demand t)
+#+end_src
+
+* Doom Large File
+Provides some optimizations to speed up the loading of large files.
+Example config
+#+begin_src emacs-lisp
+  (use-package doom-large-file
+    :demand t)
+#+end_src
+
+* Doom Defer
+Allows the user to incrementally load packages using 2 new use-package keywords
++ =defer-incrementally=- Loads the package whenever emacs is idle.
++ =after-call=- Loads the package after a hook is called. Pairs very nicely with the hooks from [[https://github.com/ajgrf/on.el][on.el]]
+
+Example of =defer-incrementally= being used on a whole package:
+#+begin_src emacs-lisp
+  (use-package evil-surround
+    :defer-incrementally t
+    :config
+    (global-evil-surround-mode))
+#+end_src
+
+Example of =defer-incrementally= being used to load parts of a larger package:
+#+begin_src emacs-lisp
+  (use-package org
+    :defer-incrementally
+    calendar find-func format-spec org-macs org-compat org-faces org-entities
+    org-list org-pcomplete org-src org-footnote org-macro ob org org-agenda
+    org-capture evil-org-agenda)
+#+end_src
+
+Example usage of =after-call=:
+#+begin_src emacs-lisp
+  (use-package eshell-git-prompt
+    :after-call eshell-mode
+    :config
+    (eshell-git-prompt-use-theme 'powerline))
+#+end_src
